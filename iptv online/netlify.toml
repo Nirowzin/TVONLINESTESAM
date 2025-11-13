@@ -1,0 +1,29 @@
+{
+  "build": {
+    "publish": ".",
+    "command": "echo 'Static site, no build needed'"
+  },
+  "headers": [
+    {
+      "for": "/*",
+      "values": {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Range, Content-Type, Authorization",
+        "Access-Control-Allow-Methods": "GET, HEAD, OPTIONS"
+      }
+    },
+    {
+      "for": "/videos/*",
+      "values": {
+        "Cache-Control": "public, max-age=86400"
+      }
+    }
+  ],
+  "redirects": [
+    {
+      "from": "/",
+      "to": "/index-netlify.html",
+      "status": 200
+    }
+  ]
+}

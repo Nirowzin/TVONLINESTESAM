@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Proxies CORS - Streamora</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-result {
+            background: rgba(255,255,255,0.1);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            border-left: 4px solid #666;
+        }
+        .success {
+            border-left-color: #28a745;
+            background: rgba(40, 167, 69, 0.1);
+        }
+        .error {
+            border-left-color: #dc3545;
+            background: rgba(220, 53, 69, 0.1);
+        }
+        .loading {
+            border-left-color: #ffc107;
+            background: rgba(255, 193, 7, 0.1);
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        pre {
+            background: rgba(0,0,0,0.3);
+            padding: 1rem;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste de Proxies CORS</h1>
+    <p>Este teste verifica se os proxies conseguem carregar a playlist IPTV.</p>
+    
+    <button onclick="testAllProxies()">🚀 Testar Todos os Proxies</button>
+    <button onclick="clearResults()">🗑️ Limpar Resultados</button>
+    
+    <div id="results"></div>
+
+    <script>
+        const DEFAULT_PLAYLIST = 'http://flowinbler.net/get.php?username=nXKshT&password=tFTkXq&type=m3u_plus&output=ts';
+        
+        const proxies = [
+            {
+                name: 'AllOrigins Proxy',
+                url: `https://api.allorigins.win/raw?url=${encodeURIComponent(DEFAULT_PLAYLIST)}`
+            },
+            {
+                name: 'ThingProxy',
+                url: `https://thingproxy.freeboard.io/fetch/${DEFAULT_PLAYLIST}`
+            },
+            {
+                name: 'CorsProxy.io',
+                url: `https://corsproxy.io/?${encodeURIComponent(DEFAULT_PLAYLIST)}`
+            },
+            {
+                name: 'CORS Anywhere',
+                url: `https://cors-anywhere.herokuapp.com/${DEFAULT_PLAYLIST}`
+            },
+            {
+                name: 'Direct Fetch',
+                url: DEFAULT_PLAYLIST
+            }
+        ];
+
+        async function testProxy(proxy) {
+            const resultDiv = document.getElementById(`result-${proxy.name.replace(/\s+/g, '-').toLowerCase()}`);
+            
+            resultDiv.className = 'test-result loading';
+            resultDiv.innerHTML = `
+                <h3>🔄 ${proxy.name}</h3>
+                <p>Testando...</p>
+            `;
+
+            try {
+                const startTime = Date.now();
+                
+                const response = await Promise.race([
+                    fetch(proxy.url),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Timeout (10s)')), 10000)
+                    )
+                ]);
+
+                const endTime = Date.now();
+                const duration = endTime - startTime;
+
+                if (!response.ok && response.status !== 0) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const text = await response.text();
+                const isValidM3U = text.includes('#EXTINF');
+                const channels = (text.match(/#EXTINF/g) || []).length;
+
+                if (isValidM3U) {
+                    resultDiv.className = 'test-result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ ${proxy.name}</h3>
+                        <p><strong>Status:</strong> Sucesso (${duration}ms)</p>
+                        <p><strong>Tamanho:</strong> ${text.length.toLocaleString()} chars</p>
+                        <p><strong>Canais:</strong> ${channels}</p>
+                        <details>
+                            <summary>Primeiras linhas</summary>
+                            <pre>${text.substring(0, 500)}...</pre>
+                        </details>
+                    `;
+                } else {
+                    throw new Error('Conteúdo não é um M3U válido');
+                }
+
+            } catch (error) {
+                resultDiv.className = 'test-result error';
+                resultDiv.innerHTML = `
+                    <h3>❌ ${proxy.name}</h3>
+                    <p><strong>Erro:</strong> ${error.message}</p>
+                `;
+            }
+        }
+
+        async function testAllProxies() {
+            const resultsDiv = document.getElementById('results');
+            
+            // Criar divs para cada proxy
+            resultsDiv.innerHTML = proxies.map(proxy => `
+                <div id="result-${proxy.name.replace(/\s+/g, '-').toLowerCase()}" class="test-result loading">
+                    <h3>⏳ ${proxy.name}</h3>
+                    <p>Aguardando...</p>
+                </div>
+            `).join('');
+
+            // Testar todos os proxies em paralelo
+            const promises = proxies.map(proxy => testProxy(proxy));
+            await Promise.allSettled(promises);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+    </script>
+</body>
+</html>

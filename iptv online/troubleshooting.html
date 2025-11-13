@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streamora - Guia de Solução de Problemas</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="troubleshooting-page">
+        <header class="header">
+            <div class="header-content">
+                <h1><i class="fas fa-tools"></i> Streamora - Solução de Problemas</h1>
+                <a href="index.html" class="back-btn">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </a>
+            </div>
+        </header>
+
+        <div class="container">
+            <div class="troubleshooting-content">
+                <h2><i class="fas fa-exclamation-triangle"></i> Problemas Comuns e Soluções</h2>
+
+                <div class="problem-section">
+                    <h3>🎬 Filmes e Séries Não Abrem</h3>
+                    <p><strong>Problema:</strong> Vídeos externos não carregam no localhost</p>
+                    <p><strong>Causa:</strong> Restrições CORS e políticas de segurança dos navegadores</p>
+                    
+                    <h4>Soluções:</h4>
+                    <ol>
+                        <li><strong>Use URLs de sua lista IPTV real:</strong>
+                            <ul>
+                                <li>URLs de provedores IPTV geralmente funcionam melhor</li>
+                                <li>O sistema tem proxy interno para contornar CORS</li>
+                            </ul>
+                        </li>
+                        
+                        <li><strong>Adicione vídeos locais:</strong>
+                            <ul>
+                                <li>Coloque arquivos .mp4 na pasta <code>videos/</code></li>
+                                <li>Use URLs como: <code>http://localhost:8000/videos/filme.mp4</code></li>
+                            </ul>
+                        </li>
+                        
+                        <li><strong>Teste com URLs diferentes:</strong>
+                            <ul>
+                                <li>Algumas URLs externas têm menos restrições</li>
+                                <li>URLs HTTP funcionam melhor que HTTPS em localhost</li>
+                            </ul>
+                        </li>
+                    </ol>
+                </div>
+
+                <div class="problem-section">
+                    <h3>📺 Canais de TV Lentos</h3>
+                    <p><strong>Soluções:</strong></p>
+                    <ul>
+                        <li>Verifique sua conexão com a internet</li>
+                        <li>Aguarde alguns segundos para buffer</li>
+                        <li>Tente outro canal da mesma categoria</li>
+                        <li>Recarregue a página se necessário</li>
+                    </ul>
+                </div>
+
+                <div class="problem-section">
+                    <h3>🔄 Como Testar Funcionamento</h3>
+                    <ol>
+                        <li><strong>Faça login como admin</strong> (senha: admin123)</li>
+                        <li><strong>Carregue sua lista IPTV real</strong> com a URL completa</li>
+                        <li><strong>Teste diferentes tipos:</strong>
+                            <ul>
+                                <li>Canais de TV (devem funcionar normalmente)</li>
+                                <li>Filmes de sua lista (funcionam melhor que exemplos)</li>
+                                <li>Séries de sua lista</li>
+                            </ul>
+                        </li>
+                    </ol>
+                </div>
+
+                <div class="problem-section">
+                    <h3>⚡ Otimizações Implementadas</h3>
+                    <ul>
+                        <li><strong>Proxy Interno:</strong> Contorna restrições CORS</li>
+                        <li><strong>Retry Automático:</strong> Tenta proxy se falhar</li>
+                        <li><strong>Detecção Inteligente:</strong> Usa proxy apenas quando necessário</li>
+                        <li><strong>Buffer Otimizado:</strong> Configurações diferentes para TV/Filmes</li>
+                        <li><strong>Timeout Inteligente:</strong> 15s para streams muito lentos</li>
+                    </ul>
+                </div>
+
+                <div class="problem-section">
+                    <h3>🎯 Recomendações</h3>
+                    <div class="recommendation">
+                        <h4>Para Melhor Experiência:</h4>
+                        <ol>
+                            <li>Use sua <strong>URL IPTV real</strong> (não os exemplos)</li>
+                            <li>Teste primeiro os <strong>canais de TV</strong> (mais estáveis)</li>
+                            <li>Para filmes/séries, prefira <strong>URLs de sua lista</strong></li>
+                            <li>Mantenha o <strong>navegador atualizado</strong></li>
+                            <li>Use <strong>Chrome ou Firefox</strong> para melhor compatibilidade</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="test-section">
+                    <h3>🧪 Teste Rápido</h3>
+                    <p>Para verificar se o sistema está funcionando:</p>
+                    <ol>
+                        <li>Carregue sua lista IPTV real</li>
+                        <li>Teste um canal de TV primeiro</li>
+                        <li>Se canais de TV funcionam, o sistema está OK</li>
+                        <li>Filmes/séries dependem da qualidade das URLs</li>
+                    </ol>
+                </div>
+
+                <div class="support-section">
+                    <h3>📞 Ainda com Problemas?</h3>
+                    <p>Se mesmo assim não funcionar:</p>
+                    <ul>
+                        <li>Abra o Console do navegador (F12) para ver erros</li>
+                        <li>Verifique se a URL da lista IPTV está correta</li>
+                        <li>Teste em outro navegador</li>
+                        <li>Verifique sua conexão com internet</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

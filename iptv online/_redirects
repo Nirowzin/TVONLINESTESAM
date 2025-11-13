@@ -1,0 +1,21 @@
+# Streamora - Netlify Configuration
+
+/*    /index-netlify.html   200
+/api/*  https://api.allorigins.win/:splat  200
+
+# Headers for better CORS handling
+/*
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  
+# Allow video content
+/videos/*
+  Cache-Control: public, max-age=86400
+  
+# Allow IPTV streams
+/*
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Headers: Range, Content-Type
+  Access-Control-Allow-Methods: GET, HEAD, OPTIONS

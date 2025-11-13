@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streamora - Plataforma de Streaming</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta name="description" content="Streamora - Plataforma de streaming para canais IPTV, filmes e séries">
+    <meta name="keywords" content="streaming, IPTV, filmes, séries, TV online">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1><i class="fas fa-play-circle"></i> Streamora</h1>
+            <div class="header-actions">
+                <a href="troubleshooting.html" class="help-btn" title="Ajuda e Solução de Problemas">
+                    <i class="fas fa-question-circle"></i>
+                </a>
+                <button id="adminBtn" class="admin-btn">
+                    <i class="fas fa-user-shield"></i> Admin
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Buscar conteúdo...">
+                <i class="fas fa-search"></i>
+            </div>
+            
+            <div class="content-type-filter">
+                <button class="filter-btn active" data-type="all">
+                    <i class="fas fa-th-large"></i> Todos
+                </button>
+                <button class="filter-btn" data-type="tv">
+                    <i class="fas fa-tv"></i> TV
+                </button>
+                <button class="filter-btn" data-type="movies">
+                    <i class="fas fa-film"></i> Filmes
+                </button>
+                <button class="filter-btn" data-type="series">
+                    <i class="fas fa-video"></i> Séries
+                </button>
+            </div>
+
+            <div class="categories">
+                <h3>Categorias</h3>
+                <div id="categoryList" class="category-list">
+                    <div class="category-item active" data-category="all">
+                        <i class="fas fa-th-large"></i> Todos os Conteúdos
+                    </div>
+                </div>
+            </div>
+
+            <div class="channel-list">
+                <h3 id="contentListTitle">Conteúdo</h3>
+                <div id="channelList" class="channels">
+                    <div class="no-channels">
+                        <i class="fas fa-info-circle"></i>
+                        <p>Nenhuma lista M3U carregada.</p>
+                        <p>Entre como admin para fazer upload.</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="player-container">
+                <div id="videoPlayer" class="video-player">
+                    <div class="player-placeholder">
+                        <i class="fas fa-play-circle"></i>
+                        <h3>Bem-vindo ao Streamora</h3>
+                        <p>Para começar:</p>
+                        <ol style="text-align: left; max-width: 300px;">
+                            <li>Entre como admin (botão no canto superior)</li>
+                            <li>Cole a URL da sua lista IPTV</li>
+                            <li>Navegue pelos canais, filmes e séries</li>
+                            <li>Clique em qualquer item para assistir</li>
+                        </ol>
+                        <p style="margin-top: 1rem;"><small>Clique no ❓ para ajuda</small></p>
+                    </div>
+                </div>
+                
+                <div class="player-controls">
+                    <div class="channel-info">
+                        <h2 id="currentChannelName">Nenhum conteúdo selecionado</h2>
+                        <p id="currentChannelGroup"></p>
+                        <div id="loadingIndicator" class="loading-indicator hidden">
+                            <i class="fas fa-spinner fa-spin"></i> Carregando...
+                        </div>
+                    </div>
+                    
+                    <div class="controls">
+                        <button id="playPauseBtn" class="control-btn" disabled>
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button id="muteBtn" class="control-btn" disabled>
+                            <i class="fas fa-volume-up"></i>
+                        </button>
+                        <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="100" disabled>
+                        <button id="fullscreenBtn" class="control-btn" disabled>
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Admin Login Modal -->
+    <div id="adminModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2><i class="fas fa-user-shield"></i> Login Administrativo</h2>
+            <form id="adminLoginForm">
+                <div class="form-group">
+                    <label for="adminPassword">Senha de Administrador:</label>
+                    <input type="password" id="adminPassword" required>
+                </div>
+                <button type="submit">Entrar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" class="admin-panel hidden">
+        <div class="admin-header">
+            <h2><i class="fas fa-cog"></i> Painel Administrativo</h2>
+            <button id="logoutBtn" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i> Sair
+            </button>
+        </div>
+        
+        <div class="admin-content">
+            <div class="upload-section">
+                <h3><i class="fas fa-upload"></i> Carregar Lista M3U</h3>
+                
+                <!-- URL Input Section -->
+                <div class="url-input-section">
+                    <h4><i class="fas fa-link"></i> URL da Lista M3U</h4>
+                    <div class="url-input-container">
+                        <input type="url" id="m3uUrlInput" placeholder="http://provedor.com/lista.m3u" class="url-input">
+                        <button id="loadUrlBtn" class="load-url-btn">Carregar URL</button>
+                    </div>
+                    <p class="url-help">Cole a URL completa da sua lista M3U (ex: http://provedor.com/get.php?username=user&password=pass&type=m3u_plus)</p>
+                </div>
+
+                <div class="divider">
+                    <span>OU</span>
+                </div>
+
+                <!-- File Upload Section -->
+                <div class="file-upload-section">
+                    <h4><i class="fas fa-file-upload"></i> Upload de Arquivo</h4>
+                    <div class="upload-area" id="uploadArea">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Arraste e solte seu arquivo M3U aqui ou clique para selecionar</p>
+                        <input type="file" id="m3uFileInput" accept=".m3u,.m3u8" hidden>
+                    </div>
+                    <button id="uploadBtn" class="upload-btn">Selecionar Arquivo M3U</button>
+                </div>
+            </div>
+
+            <div class="current-playlist">
+                <h3><i class="fas fa-list"></i> Lista Atual</h3>
+                <div id="playlistInfo" class="playlist-info">
+                    <p>Nenhuma lista carregada</p>
+                </div>
+                <button id="clearPlaylistBtn" class="danger-btn">
+                    <i class="fas fa-trash"></i> Limpar Lista
+                </button>
+                <button id="clearStorageBtn" class="warning-btn">
+                    <i class="fas fa-broom"></i> Limpar Cache
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="script-netlify.js"></script>
+    <script>
+        // Auto-carregar playlist no Netlify
+        document.addEventListener('DOMContentLoaded', function() {
+            // Aguardar a inicialização completa
+            setTimeout(() => {
+                const DEFAULT_PLAYLIST = 'http://flowinbler.net/get.php?username=nXKshT&password=tFTkXq&type=m3u_plus&output=ts';
+                
+                // Verificar se já existe playlist carregada
+                const stored = localStorage.getItem('iptvPlaylist');
+                if (!stored || stored === '[]') {
+                    console.log('🚀 Auto-carregando playlist no Netlify...');
+                    // Simular input da URL
+                    const urlInput = document.getElementById('m3uUrlInput');
+                    const loadBtn = document.getElementById('loadUrlBtn');
+                    
+                    if (urlInput && loadBtn) {
+                        urlInput.value = DEFAULT_PLAYLIST;
+                        loadBtn.click();
+                    }
+                } else {
+                    console.log('✅ Playlist já existe no storage, não carregando novamente');
+                }
+            }, 1000); // Aguardar 1s para garantir que tudo foi inicializado
+        });
+    </script>
+</body>
+</html>
