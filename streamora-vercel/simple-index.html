@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streamora - IPTV Player (Vercel)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: rgba(0,0,0,0.8);
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .status-bar {
+            background: rgba(0,0,0,0.5);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-family: monospace;
+        }
+        
+        .loading { background: rgba(255, 165, 0, 0.2) !important; }
+        .success { background: rgba(0, 255, 0, 0.2) !important; }
+        .error { background: rgba(255, 0, 0, 0.2) !important; }
+        
+        .channels-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+        
+        .channel-card {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .channel-card:hover {
+            transform: scale(1.02);
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .channel-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            margin-right: 15px;
+            background: rgba(255,255,255,0.1);
+            display: inline-block;
+            vertical-align: top;
+        }
+        
+        .channel-info {
+            display: inline-block;
+            vertical-align: top;
+            width: calc(100% - 75px);
+        }
+        
+        .channel-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .channel-group {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .video-player {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            z-index: 1000;
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #videoElement {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,0,0,0.8);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 1001;
+        }
+        
+        .search-bar {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎬 Streamora - IPTV Player</h1>
+        <p>Player IPTV com interface Netflix - Versão Vercel</p>
+    </div>
+
+    <div class="container">
+        <div id="status" class="status-bar loading">
+            🚀 Carregando canais... Testando múltiplos métodos.
+        </div>
+        
+        <input type="text" id="searchInput" class="search-bar" placeholder="🔍 Pesquisar canais..." style="display: none;">
+        
+        <div id="channelsContainer" class="channels-grid">
+            <!-- Canais serão carregados aqui -->
+        </div>
+    </div>
+
+    <!-- Player de vídeo -->
+    <div id="videoPlayer" class="video-player">
+        <div class="video-container">
+            <video id="videoElement" controls></video>
+            <button class="close-btn" onclick="closePlayer()">❌ Fechar</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script>
+        let allChannels = [];
+        let filteredChannels = [];
+        
+        const DEFAULT_PLAYLIST = 'http://flowinbler.net/get.php?username=nXKshT&password=tFTkXq&type=m3u_plus&output=ts';
+        
+        function updateStatus(message, type = 'loading') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status-bar ${type}`;
+        }
+        
+        async function loadPlaylist() {
+            updateStatus('🚀 Iniciando carregamento da playlist...', 'loading');
+            
+            // Métodos para carregar playlist
+            const methods = [
+                // Proxies externos confiáveis
+                () => fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(DEFAULT_PLAYLIST)}`),
+                () => fetch(`https://corsproxy.io/?${encodeURIComponent(DEFAULT_PLAYLIST)}`),
+                () => fetch(`https://proxy.cors.sh/${DEFAULT_PLAYLIST}`),
+                () => fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(DEFAULT_PLAYLIST)}`),
+                () => fetch(`https://thingproxy.freeboard.io/fetch/${DEFAULT_PLAYLIST}`),
+                () => fetch(DEFAULT_PLAYLIST, { mode: 'cors' })
+            ];
+            
+            const methodNames = [
+                'AllOrigins', 'CorsProxy.io', 'CORS.sh', 'CodeTabs', 'ThingProxy', 'Direct CORS'
+            ];
+            
+            // Tentar cada método
+            for (let i = 0; i < methods.length; i++) {
+                try {
+                    updateStatus(`🔄 Tentando ${methodNames[i]}...`, 'loading');
+                    
+                    const response = await Promise.race([
+                        methods[i](),
+                        new Promise((_, reject) => 
+                            setTimeout(() => reject(new Error('Timeout')), 30000)
+                        )
+                    ]);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    
+                    const text = await response.text();
+                    const channelCount = (text.match(/#EXTINF/g) || []).length;
+                    
+                    if (text.includes('#EXTINF') && channelCount > 100) {
+                        updateStatus(`✅ SUCESSO! ${channelCount} canais via ${methodNames[i]}`, 'success');
+                        await parseM3U(text);
+                        return;
+                    }
+                    
+                } catch (error) {
+                    console.log(`❌ ${methodNames[i]} falhou:`, error.message);
+                }
+            }
+            
+            // Se tudo falhar, usar playlist demo
+            updateStatus('🔄 Carregando playlist demo...', 'loading');
+            try {
+                const response = await fetch('./exemplo.m3u');
+                if (response.ok) {
+                    const text = await response.text();
+                    updateStatus('📺 Playlist demo carregada (37 canais)', 'success');
+                    await parseM3U(text);
+                } else {
+                    throw new Error('Playlist demo não encontrada');
+                }
+            } catch (error) {
+                updateStatus('❌ Falha total - Nenhuma playlist disponível', 'error');
+            }
+        }
+        
+        async function parseM3U(content) {
+            const lines = content.split('\n');
+            const channels = [];
+            
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].startsWith('#EXTINF:')) {
+                    const extinf = lines[i];
+                    const url = lines[i + 1];
+                    
+                    if (url && url.trim() && !url.startsWith('#')) {
+                        // Extrair informações
+                        const nameMatch = extinf.match(/,(.+)$/);
+                        const logoMatch = extinf.match(/tvg-logo="([^"]+)"/);
+                        const groupMatch = extinf.match(/group-title="([^"]+)"/);
+                        
+                        const channel = {
+                            name: nameMatch ? nameMatch[1].trim() : 'Canal sem nome',
+                            url: url.trim(),
+                            logo: logoMatch ? logoMatch[1] : 'https://via.placeholder.com/60x60?text=📺',
+                            group: groupMatch ? groupMatch[1] : 'Outros'
+                        };
+                        
+                        channels.push(channel);
+                    }
+                }
+            }
+            
+            allChannels = channels;
+            filteredChannels = [...channels];
+            
+            updateStatus(`🎯 ${channels.length} canais carregados com sucesso!`, 'success');
+            renderChannels();
+            
+            // Mostrar barra de pesquisa
+            document.getElementById('searchInput').style.display = 'block';
+            setupSearch();
+        }
+        
+        function renderChannels() {
+            const container = document.getElementById('channelsContainer');
+            container.innerHTML = '';
+            
+            filteredChannels.slice(0, 100).forEach(channel => {
+                const channelCard = document.createElement('div');
+                channelCard.className = 'channel-card';
+                channelCard.onclick = () => playChannel(channel);
+                
+                channelCard.innerHTML = `
+                    <img src="${channel.logo}" class="channel-logo" onerror="this.src='https://via.placeholder.com/60x60?text=📺'" alt="Logo">
+                    <div class="channel-info">
+                        <div class="channel-name">${channel.name}</div>
+                        <div class="channel-group">${channel.group}</div>
+                    </div>
+                `;
+                
+                container.appendChild(channelCard);
+            });
+        }
+        
+        function setupSearch() {
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase();
+                
+                if (term === '') {
+                    filteredChannels = [...allChannels];
+                } else {
+                    filteredChannels = allChannels.filter(channel => 
+                        channel.name.toLowerCase().includes(term) ||
+                        channel.group.toLowerCase().includes(term)
+                    );
+                }
+                
+                renderChannels();
+            });
+        }
+        
+        function playChannel(channel) {
+            const player = document.getElementById('videoPlayer');
+            const video = document.getElementById('videoElement');
+            
+            player.style.display = 'block';
+            
+            // Se HLS.js estiver disponível
+            if (Hls.isSupported()) {
+                const hls = new Hls();
+                hls.loadSource(channel.url);
+                hls.attachMedia(video);
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                video.src = channel.url;
+            } else {
+                // Fallback para MP4
+                video.src = channel.url;
+            }
+            
+            video.play().catch(e => {
+                console.log('Erro ao reproduzir:', e);
+                alert('Erro ao reproduzir o canal. Tente outro.');
+                closePlayer();
+            });
+        }
+        
+        function closePlayer() {
+            const player = document.getElementById('videoPlayer');
+            const video = document.getElementById('videoElement');
+            
+            video.pause();
+            video.src = '';
+            player.style.display = 'none';
+        }
+        
+        // Carregar playlist ao iniciar
+        loadPlaylist();
+        
+        // Fechar player com ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closePlayer();
+            }
+        });
+    </script>
+</body>
+</html>

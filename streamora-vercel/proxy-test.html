@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streamora - IPTV Player</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .status {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        
+        .success { background: rgba(0,255,0,0.2) !important; }
+        .error { background: rgba(255,0,0,0.2) !important; }
+        .loading { background: rgba(255,165,0,0.2) !important; }
+        
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        button:hover { background: #0056b3; }
+        
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔍 Teste de Proxies CORS - Streamora</h1>
+        <p>Testando qual proxy funciona melhor para carregar sua playlist de 17k+ canais.</p>
+        
+        <button onclick="testAllProxies()">🚀 Testar Todos os Proxies</button>
+        <button onclick="loadMainApp()">📺 Ir para Streamora</button>
+        
+        <div id="status"></div>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const DEFAULT_PLAYLIST = 'http://flowinbler.net/get.php?username=nXKshT&password=tFTkXq&type=m3u_plus&output=ts';
+        
+        const proxies = [
+            {
+                name: 'Vercel Function',
+                url: '/api/playlist',
+                priority: 1
+            },
+            {
+                name: 'AllOrigins Raw',
+                url: `https://api.allorigins.win/raw?url=${encodeURIComponent(DEFAULT_PLAYLIST)}`,
+                priority: 2
+            },
+            {
+                name: 'CorsProxy.io',
+                url: `https://corsproxy.io/?${encodeURIComponent(DEFAULT_PLAYLIST)}`,
+                priority: 3
+            },
+            {
+                name: 'CORS.sh',
+                url: `https://proxy.cors.sh/${DEFAULT_PLAYLIST}`,
+                priority: 4
+            },
+            {
+                name: 'CodeTabs',
+                url: `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(DEFAULT_PLAYLIST)}`,
+                priority: 5
+            },
+            {
+                name: 'ThingProxy',
+                url: `https://thingproxy.freeboard.io/fetch/${DEFAULT_PLAYLIST}`,
+                priority: 6
+            },
+            {
+                name: 'JSONProxy',
+                url: `https://jsonp.afeld.me/?url=${encodeURIComponent(DEFAULT_PLAYLIST)}`,
+                priority: 7
+            },
+            {
+                name: 'Direct (CORS)',
+                url: DEFAULT_PLAYLIST,
+                priority: 8
+            }
+        ];
+        
+        function updateStatus(message, type = 'loading') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+        
+        function addResult(message, type = 'success') {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML += `<div class="status ${type}">${message}</div>`;
+        }
+        
+        async function testProxy(proxy) {
+            try {
+                updateStatus(`🔄 Testando ${proxy.name}...`);
+                
+                const response = await Promise.race([
+                    fetch(proxy.url, {
+                        method: 'GET',
+                        headers: { 
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                            'Accept': 'application/vnd.apple.mpegurl, text/plain, */*'
+                        }
+                    }),
+                    new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Timeout')), 30000)
+                    )
+                ]);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const text = await response.text();
+                const channelCount = (text.match(/#EXTINF/g) || []).length;
+                
+                if (text.includes('#EXTINF') && channelCount > 100) {
+                    addResult(`✅ ${proxy.name}: SUCESSO! ${channelCount} canais (${(text.length/1024).toFixed(1)}KB)`, 'success');
+                    return { success: true, proxy, channelCount, size: text.length };
+                } else {
+                    addResult(`⚠️ ${proxy.name}: Resposta inválida (${channelCount} canais)`, 'error');
+                    return { success: false, proxy, error: 'Invalid response' };
+                }
+                
+            } catch (error) {
+                addResult(`❌ ${proxy.name}: ${error.message}`, 'error');
+                return { success: false, proxy, error: error.message };
+            }
+        }
+        
+        async function testAllProxies() {
+            document.getElementById('results').innerHTML = '';
+            updateStatus('🚀 Iniciando teste de proxies...', 'loading');
+            
+            const results = [];
+            
+            for (const proxy of proxies) {
+                const result = await testProxy(proxy);
+                results.push(result);
+                
+                // Se encontrou um que funciona bem, para aqui
+                if (result.success && result.channelCount > 1000) {
+                    updateStatus(`🎯 PROXY PERFEITO ENCONTRADO: ${proxy.name}`, 'success');
+                    addResult(`🏆 RECOMENDADO: Use ${proxy.name} - ${result.channelCount} canais`, 'success');
+                    break;
+                }
+            }
+            
+            const workingProxies = results.filter(r => r.success);
+            if (workingProxies.length === 0) {
+                updateStatus('❌ Nenhum proxy funcionou. Usando playlist demo.', 'error');
+                addResult('💡 SOLUÇÃO: O Streamora vai usar a playlist demo de 37 canais.', 'loading');
+            } else {
+                updateStatus(`✅ Teste concluído! ${workingProxies.length} proxies funcionando.`, 'success');
+            }
+        }
+        
+        function loadMainApp() {
+            window.location.href = './index.html';
+        }
+        
+        // Auto-test quando carrega
+        setTimeout(() => {
+            updateStatus('💡 Clique em "Testar Todos os Proxies" para ver qual funciona melhor!', 'loading');
+        }, 1000);
+    </script>
+</body>
+</html>
